@@ -1,0 +1,347 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Bum Hub⭐",
+   Icon = 0,
+   LoadingTitle = "Loading...",
+   LoadingSubtitle = "Please wait",
+   ShowText = "Bum Hub⭐",
+   Theme = "Default",
+
+   ToggleUIKeybind = "K", -- The keybind to toggle the UI visibility (string like "K" or Enum.KeyCode)
+
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false,
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = nil,
+      FileName = "Bum Hub"
+   },
+
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink",
+      RememberJoins = true
+   },
+
+   KeySystem = true,
+   KeySettings = {
+      Title = "Key Bum Hub",
+      Subtitle = "Key System",
+      Note = "Getkey In My Discord",
+      FileName = "Key",
+      SaveKey = true,
+      GrabKeyFromSite = false,
+      Key = {"kiendepchai"}
+   }
+})
+
+--Tabs
+local MainTab = Window:CreateTab("Main", 4483362458)
+local SettingTab = Window:CreateTab("Setting", 4483362458)
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+--Sliders
+local Slider = MainTab:CreateSlider({
+    Name = "Walkspeed",
+    Range = {16, 250},
+    Increment = 1,
+    Suffix = "Speed",
+    CurrentValue = 16,
+    Flag = "Slider1",
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.WalkSpeed = Value
+        end
+    end,
+})
+
+local Slider = MainTab:CreateSlider({
+    Name = "Jump Power",
+    Range = {50, 200},
+    Increment = 1,
+    Suffix = "Power",
+    CurrentValue = 50,
+    Flag = "SliderJump",
+    Callback = function(Value)
+        local player = game.Players.LocalPlayer
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.JumpPower = Value
+        end
+    end,
+})
+
+--Toggles
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+local ClickTP_Enabled = false
+local ClickTP_Connection
+
+local Toggle = MainTab:CreateToggle({
+    Name = "Click To Teleport(Only PC)",
+    CurrentValue = false,
+    Flag = "ToggleClickTP",
+    Callback = function(Value)
+        ClickTP_Enabled = Value
+        
+        if Value then
+            ClickTP_Connection = Mouse.Button1Down:Connect(function()
+                -- Chỉ teleport nếu đang giữ Ctrl
+                if ClickTP_Enabled and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) and Mouse.Target then
+                    local targetPos = Mouse.Hit.p + Vector3.new(0, 3, 0)
+                    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+                    end
+                end
+            end)
+        else
+            if ClickTP_Connection then
+                ClickTP_Connection:Disconnect()
+                ClickTP_Connection = nil
+            end
+        end
+    end,
+})
+
+local Lighting = game:GetService("Lighting")
+local originalBrightness = Lighting.Brightness
+local originalClockTime = Lighting.ClockTime
+local originalFogEnd = Lighting.FogEnd
+local Lighting = game:GetService("Lighting")
+local originalBrightness = Lighting.Brightness
+local originalClockTime = Lighting.ClockTime
+local originalFogEnd = Lighting.FogEnd
+local originalGlobalShadows = Lighting.GlobalShadows
+local originalAmbient = Lighting.Ambient
+
+local Toggle = SettingTab:CreateToggle({
+    Name = "Full Bright",
+    CurrentValue = false,
+    Flag = "ToggleFullBright",
+    Callback = function(Value)
+        if Value then
+            -- Bật Full Bright
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.FogEnd = 100000
+            Lighting.GlobalShadows = false
+            Lighting.Ambient = Color3.fromRGB(178, 178, 178)
+        else
+            -- Khôi phục giá trị gốc
+            Lighting.Brightness = originalBrightness
+            Lighting.ClockTime = originalClockTime
+            Lighting.FogEnd = originalFogEnd
+            Lighting.GlobalShadows = originalGlobalShadows
+            Lighting.Ambient = originalAmbient
+        end
+    end,
+})
+
+local Terrain = workspace:FindFirstChildOfClass("Terrain")
+
+-- Lưu giá trị gốc của nước
+local originalTerrainWaterWaveSize = Terrain and Terrain.WaterWaveSize
+local originalTerrainWaterWaveSpeed = Terrain and Terrain.WaterWaveSpeed
+local originalTerrainWaterReflectance = Terrain and Terrain.WaterReflectance
+local originalTerrainWaterTransparency = Terrain and Terrain.WaterTransparency
+
+-- Lưu dữ liệu gốc của tất cả object cần thay đổi
+local originalValues = {}
+
+local Toggle = SettingTab:CreateToggle({
+    Name = "Boost FPS",
+    CurrentValue = false,
+    Flag = "ToggleBoostFPS",
+    Callback = function(Value)
+        if Value then
+            -- Lưu giá trị gốc trước khi thay đổi
+            for _, v in pairs(game:GetDescendants()) do
+                if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                    originalValues[v] = {Enabled = v.Enabled}
+                    v.Enabled = false
+                elseif v:IsA("Explosion") then
+                    originalValues[v] = {
+                        BlastPressure = v.BlastPressure,
+                        BlastRadius = v.BlastRadius
+                    }
+                    v.BlastPressure = 0
+                    v.BlastRadius = 0
+                elseif v:IsA("MeshPart") then
+                    originalValues[v] = {TextureID = v.TextureID}
+                    v.TextureID = ""
+                elseif v:IsA("Decal") or v:IsA("Texture") then
+                    originalValues[v] = {Transparency = v.Transparency}
+                    v.Transparency = 1
+                end
+            end
+
+            -- Làm nước nhẹ hơn
+            if Terrain then
+                Terrain.WaterWaveSize = 0
+                Terrain.WaterWaveSpeed = 0
+                Terrain.WaterReflectance = 0
+                Terrain.WaterTransparency = 0
+            end
+
+        else
+            -- Khôi phục toàn bộ giá trị ban đầu
+            for obj, props in pairs(originalValues) do
+                if obj and obj.Parent then
+                    for propName, value in pairs(props) do
+                        pcall(function()
+                            obj[propName] = value
+                        end)
+                    end
+                end
+            end
+
+            -- Khôi phục nước
+            if Terrain then
+                Terrain.WaterWaveSize = originalTerrainWaterWaveSize
+                Terrain.WaterWaveSpeed = originalTerrainWaterWaveSpeed
+                Terrain.WaterReflectance = originalTerrainWaterReflectance
+                Terrain.WaterTransparency = originalTerrainWaterTransparency
+            end
+
+            -- Xóa dữ liệu đã lưu để tránh rác bộ nhớ
+            originalValues = {}
+        end
+    end,
+})
+
+local UserInputService = game:GetService("UserInputService")
+local Player = game:GetService("Players").LocalPlayer
+
+local InfinityJumpEnabled = false
+local JumpConnection -- để có thể ngắt khi tắt toggle
+
+local Toggle = MainTab:CreateToggle({
+    Name = "Infinity Jump",
+    CurrentValue = false,
+    Flag = "ToggleInfinityJump",
+    Callback = function(Value)
+        InfinityJumpEnabled = Value
+        
+        -- Nếu bật
+        if Value then
+            JumpConnection = UserInputService.JumpRequest:Connect(function()
+                if Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") then
+                    Player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        else
+            -- Nếu tắt thì ngắt kết nối và để Roblox xử lý nhảy như bình thường
+            if JumpConnection then
+                JumpConnection:Disconnect()
+                JumpConnection = nil
+            end
+        end
+    end,
+})
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local NoClipEnabled = false
+local NoClipConnection
+
+local Toggle = MainTab:CreateToggle({
+    Name = "No Clip",
+    CurrentValue = false,
+    Flag = "ToggleNoClip",
+    Callback = function(Value)
+        NoClipEnabled = Value
+        
+        if Value then
+            -- Bật noclip
+            NoClipConnection = RunService.Stepped:Connect(function()
+                if LocalPlayer.Character then
+                    for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                        if part:IsA("BasePart") and part.CanCollide then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        else
+            -- Tắt noclip và khôi phục va chạm
+            if NoClipConnection then
+                NoClipConnection:Disconnect()
+                NoClipConnection = nil
+            end
+            if LocalPlayer.Character then
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = true
+                    end
+                end
+            end
+        end
+    end,
+})
+
+--Buttons
+local Button = MiscTab:CreateButton({
+    Name = "Rejoin",
+    Callback = function()
+        local TeleportService = game:GetService("TeleportService")
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        
+        TeleportService:TeleportToPlaceInstance(
+            game.PlaceId,      
+            game.JobId,        
+            LocalPlayer         
+        )
+    end,
+})
+
+local Button = MiscTab:CreateButton({
+    Name = "Server Hop",
+    Callback = function()
+        local TeleportService = game:GetService("TeleportService")
+        local HttpService = game:GetService("HttpService")
+        local Players = game:GetService("Players")
+
+        local PlaceId = game.PlaceId
+        local CurrentJobId = game.JobId
+
+        -- Lấy danh sách server
+        local Servers = {}
+        local Cursor = ""
+        local FoundServer = nil
+
+        repeat
+            local Url = "https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Asc&limit=100"..(Cursor ~= "" and "&cursor="..Cursor or "")
+            local Success, Result = pcall(function()
+                return HttpService:JSONDecode(game:HttpGet(Url))
+            end)
+
+            if Success and Result and Result.data then
+                for _, Server in ipairs(Result.data) do
+                    if Server.id ~= CurrentJobId and Server.playing < Server.maxPlayers then
+                        FoundServer = Server.id
+                        break
+                    end
+                end
+                Cursor = Result.nextPageCursor or ""
+            else
+                Cursor = ""
+            end
+        until FoundServer or Cursor == ""
+
+        if FoundServer then
+            TeleportService:TeleportToPlaceInstance(PlaceId, FoundServer, Players.LocalPlayer)
+
+        end
+    end,
+})
+
+
+
+
+
